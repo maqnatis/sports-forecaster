@@ -1,0 +1,5 @@
+<dependency>
+    <groupId>io.embabel</groupId>
+    <artifactId>embabel-agent-starter-ollama</artifactId>
+    <version>0.1.0</version>
+</dependency>
