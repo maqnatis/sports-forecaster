@@ -1,0 +1,16 @@
+{
+    "name": "Java 21 Dev Environment",
+    "image": "mcr.microsoft.com/devcontainers/java:21-bulletin",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscjava.vscode-java-pack",
+                "vscjava.vscode-lombok"
+            ]
+        }
+    },
+    "postCreateCommand": "mvn clean install -DskipTests"
+}
