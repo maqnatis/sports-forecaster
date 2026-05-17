@@ -1,0 +1,55 @@
+{
+  "name": "Outdoor Sports Agent – Java 21 / Embabel",
+
+  // ── Base Image ─────────────────────────────────────────────────────────────
+  // Microsoft's official Java dev container with JDK 21 + Maven pre-installed
+  "image": "mcr.microsoft.com/devcontainers/java:21",
+
+  // ── Features ───────────────────────────────────────────────────────────────
+  "features": {
+    // Ensures Maven 3.9+ is available (image may already include it)
+    "ghcr.io/devcontainers-contrib/features/maven-sdkman:2": {
+      "version": "3.9.6"
+    }
+  },
+
+  // ── VS Code Extensions ─────────────────────────────────────────────────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",        // Java Extension Pack (Language Server, Debugger, Maven)
+        "vscjava.vscode-spring-boot-dashboard", // Spring Boot Dashboard
+        "vmware.vscode-spring-boot",        // Spring Boot Tools (property autocompletion)
+        "redhat.vscode-yaml",               // YAML / application.yml support
+        "vscjava.vscode-maven",             // Maven integration
+        "ms-vscode.vscode-json"             // JSON support for model inspection
+      ],
+      "settings": {
+        "java.compile.nullAnalysis.mode": "automatic",
+        "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/current",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4
+      }
+    }
+  },
+
+  // ── Port Forwarding ────────────────────────────────────────────────────────
+  // Expose 8080 in case you later add a web/REST endpoint
+  "forwardPorts": [8080],
+
+  // ── Post-Create Command ────────────────────────────────────────────────────
+  // Downloads all Maven dependencies as soon as the Codespace is created,
+  // so the first build is fast. This runs in the background.
+  "postCreateCommand": "mvn dependency:resolve -q && echo '✅ Dependencies resolved'",
+
+  // ── Environment Variables ──────────────────────────────────────────────────
+  // DO NOT put real API keys here. Instead, add OPENAI_API_KEY as a
+  // GitHub Codespace Secret in your repository settings:
+  //   Settings → Secrets and variables → Codespaces → New secret
+  "remoteEnv": {
+    "OPENAI_API_KEY": "${localEnv:OPENAI_API_KEY}"
+  },
+
+  // ── Container User ─────────────────────────────────────────────────────────
+  "remoteUser": "vscode"
+}

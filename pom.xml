@@ -1,42 +1,170 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>sports-forecaster</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <!-- ===== Project Identity ===== -->
+    <groupId>com.outdoorsports</groupId>
+    <artifactId>outdoor-sports-agent</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>Outdoor Sports Agent</name>
+    <description>
+        An Embabel-powered agentic application that predicts outdoor sports
+        playing conditions based on weather, datetime, and location.
+    </description>
 
+    <!-- ===== Spring Boot Parent (manages Spring AI BOM transitively) ===== -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- Must stay on 3.x; Embabel does not yet support Spring Boot 4 -->
+        <version>3.5.0</version>
+        <relativePath/>
+    </parent>
+
+    <!-- ===== Global Properties ===== -->
     <properties>
+        <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Embabel – latest stable on Maven Central as of May 2026 -->
+        <embabel-agent.version>0.3.2</embabel-agent.version>
+
+        <!-- Spring AI BOM version aligned with Spring Boot 3.5 -->
+        <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
 
+    <!-- ===== Dependency Management (BOM imports) ===== -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring AI BOM – manages all spring-ai-* artifact versions -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ===== Dependencies ===== -->
     <dependencies>
+
+        <!-- ─── Embabel: shell-mode starter (interactive CLI + GOAP engine) ─── -->
+        <!--
+             embabel-agent-starter-shell pulls in:
+               • embabel-agent-api (core annotations: @Agent, @Action, @AchievesGoal)
+               • embabel-agent-platform-autoconfigure (GOAP planner, AgentPlatform)
+               • embabel-agent-shell-autoconfigure (Spring Shell commands: execute / chat)
+               • spring-shell-starter
+        -->
         <dependency>
-            <groupId>io.embabel</groupId>
-            <artifactId>embabel-core</artifactId>
-            <version>0.1.0</version> </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>6.1.5</version>
+            <groupId>com.embabel.agent</groupId>
+            <artifactId>embabel-agent-starter-shell</artifactId>
+            <version>${embabel-agent.version}</version>
         </dependency>
+
+        <!-- ─── Embabel: OpenAI LLM provider auto-configuration ─── -->
+        <!--
+             Bridges Embabel to Spring AI's OpenAI chat client.
+             Reads OPENAI_API_KEY from environment automatically.
+        -->
+        <dependency>
+            <groupId>com.embabel.agent</groupId>
+            <artifactId>embabel-agent-starter-openai</artifactId>
+            <version>${embabel-agent.version}</version>
+        </dependency>
+
+        <!-- ─── Spring AI: OpenAI chat integration (pulled transitively but explicit for clarity) ─── -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- ─── Spring Boot Web (needed for RestClient used in weather service) ─── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- ─── Jackson: JSON serialisation/deserialisation for model records ─── -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!-- ─── Testing ─── -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
+    <!-- ===== Repositories ===== -->
+    <!--
+         Since Embabel 0.2.0 stable releases are on Maven Central.
+         Spring Milestones is needed only for Spring AI milestone/RC builds.
+         Remove spring-milestones if using a GA Spring AI release.
+    -->
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <!-- ===== Build ===== -->
     <build>
         <plugins>
+            <!-- Spring Boot fat-jar packager -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.outdoorsports.Main</mainClass>
+                </configuration>
+            </plugin>
+
+            <!-- Enforce Java 21 compilation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <!-- Enable pattern matching, records, sealed classes etc. -->
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Surefire: also pass --enable-preview to forked JVM -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-preview</argLine>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>
